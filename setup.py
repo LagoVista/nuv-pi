@@ -4,14 +4,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="nuv-pi-bytemaster", # Replace with your own username
+    name="nuvpy-bytemaster", # Replace with your own username
     version="1.0.0",
     author="Software Logistics, LLC",
     author_email="kevinw@software-logistics.com",
-    description="Python libraries for access of data generated with NuvIoT",
+    description="Python libraries for access of data generated from IoT devices captured with NuvIoT",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/lagovista/nuvpi",
+    url="https://github.com/lagovista/nuvpy",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
