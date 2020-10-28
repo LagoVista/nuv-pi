@@ -13,6 +13,8 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/lagovista/nuvpy",
     packages=setuptools.find_packages(),
+    keywords=['NuvIoT','IoT','Devices','Machine Learning'],
+    download_url="https://github.com/lagovista/nuvpy/archive/v_1.tar.gz",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
