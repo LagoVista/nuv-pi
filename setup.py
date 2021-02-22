@@ -16,7 +16,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     keywords=['NuvIoT','IoT','Devices','Machine Learning'],
     download_url="https://github.com/lagovista/nuvpy/archive/v_1.0.5.tar.gz",
-    install_requires=['jsonschema', 'urllib3', 'requests', 'tqdm', 'tzdata', 'backports.zoneinfo', 'fpdf'], 
+    install_requires=['jsonschema', 'urllib3', 'requests', 'tqdm', 'tzdata', 'backports.zoneinfo', 'fpdf', 'sendgrid'], 
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

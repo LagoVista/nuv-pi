@@ -46,15 +46,18 @@ class AuthContext:
 
             http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
             headers={'Content-Type': 'application/json'}
-            r = http.request("POST",self.url + "/api/v1/auth", body=data, headers=headers, preload_content=False)
+            client_auth_uri = "%s/api/v1/auth" % self.url
+            print(client_auth_uri)
+            r = http.request("POST",client_auth_uri, body=data, headers=headers, preload_content=False)
 
             responseJSON = ''
             for chunk in r.stream(32):
                 responseJSON += chunk.decode("utf-8")
 
             r.release_conn()
-
-            ro = json.loads(responseJSON);
+            print("REQUESTED AUTH")
+            print(responseJSON)
+            ro = json.loads(responseJSON)
 
             self.app_instance_id = ro["result"]["appInstanceId"]
             self.auth_token_expires = ro["result"]["accessTokenExpiresUTC"]

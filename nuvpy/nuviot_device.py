@@ -66,8 +66,6 @@ def get_devices(ctx):
     rj = json.loads(responseJSON)
     return nuviot_util.to_item_array(rj)
 
-
-
 def print_device_groups(ctx, repoid = None):
     responseJSON = nuviot_srvc.get(ctx, '/clientapi/repo/groups')
 
