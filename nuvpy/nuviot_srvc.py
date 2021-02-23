@@ -48,7 +48,7 @@ def get(ctx, path, content_type = "", pageSize=50):
     responseJSON = ''
     for chunk in r.stream(32):
         responseJSON += chunk.decode("utf-8")
-        
+
     r.release_conn()
     
     if r.status > 299:
@@ -60,6 +60,7 @@ def get(ctx, path, content_type = "", pageSize=50):
         print()
         raise Exception("Http non success code %d not complete request to %s" % (r.status, path))
    
+
     return responseJSON
 
 def post_json(ctx, path, json):
@@ -93,9 +94,8 @@ def post_json(ctx, path, json):
         print('--------------------------------------------------------------------------------')
         print()
         raise Exception("Could not post JSON to %s" % path)
-   
-    return responseJSON
-  
+
+    return responseJSON  
   
 def post_file(ctx, path, file_name):
     if ctx.auth_type == 'user':

@@ -1,7 +1,7 @@
 import os, sys
 import errno
 import json
-import nuvpy.nuviot_srvc as nuviot_srvc
+import nuviot_srvc as nuviot_srvc
 
 sendgrid_api = os.environ.get('SENDGRID_API_KEY')
 reports_from_name = os.environ.get('REPORTS_FROM_NAME')
@@ -17,16 +17,18 @@ def init(output_dir):
         if e.errno != errno.EEXIST:
             raise
 
-def add_report_history(ctx, report_history):
-    response = nuviot_srvc.post_json(ctx, "/clientapi/report/history", report_history)
-    responseJSON = json.loads(response)
+def add_generated_report_header(ctx, report_history):
+    generated_report_json = json.dumps(report_history)
+    response = nuviot_srvc.post_json(ctx, "/clientapi/generatedreport", generated_report_json)
+    responseJSON = json.loads(response)    
+
     if(responseJSON["successful"]):
         return responseJSON["result"]
     else:
         raise Exception(responseJSON["errors"][0]["message"])
 
 def upload_report(ctx, report_id, report_history_id, output_file):
-    uri = "/clientapi/report/%s/history/%s/upload" % (report_id, report_history_id)
+    uri = "/clientapi/report/%s/%s/upload" % (report_id, report_history_id)
     nuviot_srvc.post_file(ctx, uri, output_file)
 
 def add_page_header(pdf, report_title, device_name, logo_file, date):
