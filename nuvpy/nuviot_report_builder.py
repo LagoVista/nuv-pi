@@ -1,11 +1,7 @@
 import os, sys
 import errno
 import json
-import nuviot_srvc as nuviot_srvc
-
-sendgrid_api = os.environ.get('SENDGRID_API_KEY')
-reports_from_name = os.environ.get('REPORTS_FROM_NAME')
-reports_from_email = os.environ.get('REPORTS_FROM_EMAIL')
+import nuvpy.nuviot_srvc as nuviot_srvc
 
 from datetime import datetime, timezone, timedelta
 import pandas as pd

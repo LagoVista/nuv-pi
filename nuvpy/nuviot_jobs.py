@@ -8,9 +8,7 @@ import urllib3.request
 import requests
 import nuvpy.nuviot_srvc as nuviot_srvc
 
-job_server = os.environ.get('JOB_SERVER')
-
-job_server = 'http://localhost:5051'
+job_server = os.environ.get('JOB_SERVER_URL')
 
 def get_launch_args():
     """
