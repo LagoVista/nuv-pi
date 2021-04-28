@@ -9,10 +9,12 @@ import requests
 import nuvpy.nuviot_srvc as nuviot_srvc
 
 job_server = os.environ.get('JOB_SERVER_URL')
+if(job_server is None):
+    raise Exception("Missing environment variable [JOB_SERVER_URL]")
 
 def get_launch_args():
     """
-    Method to return job_type_id and job_id from the parameters used to launch a script.
+    Method to return job_type_id and job_id from the parameters used to launch a script from the command line.
    
     Returns
     ---------
@@ -45,9 +47,12 @@ def set_job_status(job_type_id: str, job_id: str, status: str):
         The job id to update the percentage completion for the job that is being executed.
     
     """
-    r = requests.get('%s/api/job/%s/%s/%s' % (job_server, job_type_id, job_id, status))
+
+    status_url = '%s/api/job/%s/%s/%s' % (job_server, job_type_id, job_id, status)
+    print(status_url)
+    r = requests.get(status_url)
     if(r.status_code > 299):
-        raise Exception("Error setting job status")
+        raise Exception("Error setting job status %s - Http Code %d (%s)" % (status, r.status_code, r.content))
 
 def set_job_progress(job_type_id, job_id, percent_complete):
     """
@@ -61,12 +66,65 @@ def set_job_progress(job_type_id, job_id, percent_complete):
 
     job_id: string
         The job_id to update the percentage completion for the job that is being executed.
-
     """
     r = requests.get('%s/api/job/%s/%s/progress/%d' % (job_server, job_type_id, job_id, percent_complete))
     if(r.status_code > 299):
-       raise Exception("Error setting job status")
+       raise Exception("Error setting job error message: Http Response Code: %d" % r.status_code)
 
+def add_job_error(job_type_id, job_id, error_message):
+    """
+    Called when a job has an error, will log that error on the server and notify the user
+   
+    Parameters
+    ----------
+    job_type_id: string
+       The job_type_id to update the percentage completed for reports this is the report id
+
+    job_id: string
+        The job_id to update the percentage completion for the job that is being executed.
+   
+    error_message: string
+        Error message to be logged and reported to the user
+    """
+
+    output = {
+        "jobTypeId": job_type_id,
+        "jobId": job_id,
+        "success": False,
+        "error": error_message
+    }
+
+    r = requests.post('%s/api/job/failed' % job_server, json=output)   
+    if(r.status_code > 299):
+       raise Exception("Error writing job error Http Error Code %d" % r.status_code)
+    
+def complete_job(job_type_id, job_id, artifact):
+    """
+    Called when a job has an error, will log that error on the server and notify the user
+   
+    Parameters
+    ----------
+    job_type_id: string
+       The job_type_id to update the percentage completed for reports this is the report id
+
+    job_id: string
+        The job_id to update the percentage completion for the job that is being executed.
+   
+    error_message: string
+        Error message to be logged and reported to the user
+    """
+
+    output = {
+        "jobTypeId": job_type_id,
+        "jobId": job_id,
+        "success": True,
+        "artifact": artifact
+    }
+
+    r = requests.post('%s/api/job/completed' % job_server, json=output)   
+    if(r.status_code > 299):
+       raise Exception("Error writing job error Http Error Code %d" % r.status_code)
+   
 def get_job(job_type_id: str, job_id: str):
     """
     Download a job, a job consists of the information necessary to build a report or process data
@@ -91,20 +149,22 @@ def get_job(job_type_id: str, job_id: str):
    
     r = requests.get(getJobUri)
     if(r.status_code > 299):
-        raise Exception("Could not get job details for job type id=%s and job id=%s" % (jobTypeId, jobId))
+        raise Exception("Could not get job details for job type id=%s and job id=%s" % (job_type_id, job_id))
 
     job = json.loads(r.text)
     reportParameters = json.loads(job["payload"])
     return job, reportParameters
 
 
-def download_script_file(ctx, script_id, output_dir):
+def get_script_file(ctx, script_id, output_dir):
     """
-    Download a script file, or collection of files that make up the scripts necessry to execute
+    Get a script file, or collection of files that make up the scripts necessry to execute
     a job or a report.  If the script is a collection of files it will be downloaded as a zip
     file an extracted in the directory provided.
 
     If a zip file is downloaded, the file that has the method start_job will be returned.
+
+    If the directory already exists, it will use the existing script file.
 
     Parameters
     ---------
@@ -123,15 +183,37 @@ def download_script_file(ctx, script_id, output_dir):
         Returns the name of the script file that can be loaded and executed
     
     """
+    if os.path.exists(output_dir):
+        print("Script directory %s exists, checking it for module with start_job." % output_dir)
+        sys.path.append(output_dir)
+
+        files = os.listdir(output_dir)
+        for file in files:
+            script_file_name, file_extension = os.path.splitext(file)
+            if(file_extension.lower() == ".py"):
+                module = __import__(script_file_name)
+                if(callable(getattr(module, "start_job", None))):
+                    return script_file_name
+
+        sys.path.remove(output_dir)
+
+        print("Could not find script file that implements start_job")
+
+        raise Exception("Could not find script file that implements start_job")
+ 
+    print("Script directory doesn't exist, downloading now.")
+
+    # If we made it here, that means the file doesn't exists locally so download it.
+
     path = "/clientapi/report/%s/runtime" % script_id
+
     if ctx.auth_type == 'user':
         headers={'Authorization': 'Bearer ' + ctx.auth_token}
     else:
         headers={'Authorization': 'APIKey ' + ctx.client_id + ':' + ctx.client_token}
 
-    url = ctx.url + path
-
-    chunk_size = 65536
+    url = "%s%s" % (ctx.url, path)
+    print("Downloading script %s" % url)
 
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
     r = http.request("GET", url, headers=headers, preload_content=False)
@@ -148,9 +230,7 @@ def download_script_file(ctx, script_id, output_dir):
     fileName = m.group(1)
     fullOutput = "%s/%s" % (output_dir, fileName)
 
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
+    os.makedirs(output_dir)
     with open(fullOutput, 'wb') as out:
         while True:
             data = r.read(65535)
@@ -159,7 +239,7 @@ def download_script_file(ctx, script_id, output_dir):
         
             out.write(data)
     r.release_conn()
-   
+
     if r.headers["Content-Type"] == "application/zip":
         with zipfile.ZipFile(fullOutput, 'r') as zip_ref:
             zip_ref.extractall(output_dir)
@@ -174,7 +254,10 @@ def download_script_file(ctx, script_id, output_dir):
             if(file_extension.lower() == ".py"):
                 module = __import__(script_file_name)
                 if(callable(getattr(module, "start_job", None))):
+                    sys.path.remove(output_dir)
                     return script_file_name
+
+        sys.path.remove(output_dir)
 
         raise Exception("Could not find script file that implements start_job")
     else:

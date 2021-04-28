@@ -167,7 +167,7 @@ def get_paged(ctx, rqst):
         headers={'Authorization': 'APIKey ' + ctx.client_id + ':' + ctx.client_token, 'x-pagesize' : rqst.pageSize}    
 
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-    url = ctx.url + rqst.path;
+    url = ctx.url + rqst.path
     r = http.request("GET", url, headers=headers, preload_content=False)
     responseJSON = ''
     for chunk in r.stream(32):
