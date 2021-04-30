@@ -226,9 +226,14 @@ def get_script_file(ctx, script_id, output_dir):
         r.release_conn()
         return None
 
+    print("Downloaded script %s" % url)
+    
     m = re.search('filename=?([\w\.\-]*)',r.headers['Content-Disposition'])
     fileName = m.group(1)
     fullOutput = "%s/%s" % (output_dir, fileName)
+
+    print("Script file name %s" % fileName)
+    print("Full output for file %s" % fullOutput)
 
     os.makedirs(output_dir)
     with open(fullOutput, 'wb') as out:
@@ -261,6 +266,6 @@ def get_script_file(ctx, script_id, output_dir):
 
         raise Exception("Could not find script file that implements start_job")
     else:
-        script_file_name, file_extension = os.path.splitext(file)
+        script_file_name, file_extension = os.path.splitext(fileName)
         
         return script_file_name
