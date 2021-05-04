@@ -1,6 +1,10 @@
 import os, sys
 import errno
 import json
+import urllib3.request
+import urllib.parse
+import certifi
+import requests
 import nuvpy.nuviot_srvc as nuviot_srvc
 
 from datetime import datetime, timezone, timedelta
@@ -13,19 +17,80 @@ def init(output_dir):
         if e.errno != errno.EEXIST:
             raise
 
-def add_generated_report_header(ctx, report_history):
+def add_generated_report_header(report_history):
+    job_server = os.environ.get('JOB_SERVER_URL')
+    if(job_server is None):
+        raise Exception("Missing environment variable [JOB_SERVER_URL]")
+
+    headers={'Content-Type':'application/json'}
+    
     generated_report_json = json.dumps(report_history)
-    response = nuviot_srvc.post_json(ctx, "/clientapi/generatedreport", generated_report_json)
-    responseJSON = json.loads(response)    
+    url = "%s/api/generatedreport/header" % (job_server)
+    
+    encoded_data = generated_report_json.encode('utf-8')
+    
+    http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+    r = http.request('POST', url,
+             headers=headers,
+             preload_content=False,
+             body=encoded_data)
+
+    responseText = ''
+    responseStatus = r.status
+    for chunk in r.stream(32):
+        responseText += chunk.decode("utf-8")
+    
+    responseJSON = json.loads(responseText)
+
+    r.release_conn()
+
+    if responseStatus > 299:
+        print('Failed http call, response code: ' + str(responseStatus))
+        print('Url: ' + url)
+        print(responseJSON)
+        print('--------------------------------------------------------------------------------')
+        print()
+        raise Exception("Could not post JSON to %s" % url)
 
     if(responseJSON["successful"]):
         return responseJSON["result"]
     else:
         raise Exception(responseJSON["errors"][0]["message"])
 
-def upload_report(ctx, report_id, report_history_id, output_file):
-    uri = "/clientapi/report/%s/%s/upload" % (report_id, report_history_id)
-    nuviot_srvc.post_file(ctx, uri, output_file)
+def upload_report(report_id, generated_report_id, output_file):
+    job_server = os.environ.get('JOB_SERVER_URL')
+    if(job_server is None):
+        raise Exception("Missing environment variable [JOB_SERVER_URL]")
+
+    url = "%s/api/generatedreport/%s/%s/upload" % (job_server, report_id, generated_report_id)
+
+    if(not os.path.isfile(output_file)):
+        raise Exception("File %s does not exists" % output_file)    
+    
+    files = {'file': open(output_file, 'rb')}
+    r = requests.post(url, files = files)
+
+    print(r.text)
+
+    responseText = r.text
+    responseStatus = r.status_code
+    
+    responseJSON = json.loads(responseText)
+
+    print(responseStatus)
+    if responseStatus > 299:
+        print('Failed http call, response code: ' + str(responseStatus))
+        print('Url: ' + url)
+        print(r.text)
+        print('--------------------------------------------------------------------------------')
+        print()
+        raise Exception("Error %d, could not upload %s to %s." % (r.status_code, output_file, url))  
+
+    if(responseJSON["successful"]):
+        return responseJSON["result"]
+    else:
+        raise Exception(responseJSON["errors"][0]["message"])
+
 
 def add_page_header(pdf, report_title, device_name, logo_file, date):
     report_date = datetime.strptime(date, "%m/%d/%Y %H:%M")

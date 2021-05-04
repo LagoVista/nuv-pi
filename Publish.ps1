@@ -1,4 +1,4 @@
-$tag = "1.0.16"
+$tag = "1.1.0"
 
 $publishDir = "./dist"
 

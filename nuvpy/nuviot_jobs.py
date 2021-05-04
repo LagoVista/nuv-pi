@@ -156,7 +156,7 @@ def get_job(job_type_id: str, job_id: str):
     return job, reportParameters
 
 
-def get_script_file(ctx, script_id, output_dir):
+def get_script_file(script_id, output_dir):
     """
     Get a script file, or collection of files that make up the scripts necessry to execute
     a job or a report.  If the script is a collection of files it will be downloaded as a zip
@@ -168,8 +168,6 @@ def get_script_file(ctx, script_id, output_dir):
 
     Parameters
     ---------
-    ctx: AuthContext
-       Authorization context as previously created with nuviot_auth
 
     script_id: string
         ID of the script that will be downloaded
@@ -205,30 +203,29 @@ def get_script_file(ctx, script_id, output_dir):
 
     # If we made it here, that means the file doesn't exists locally so download it.
 
-    path = "/clientapi/report/%s/runtime" % script_id
+    path = "/api/report/%s/runtime" % script_id
 
-    if ctx.auth_type == 'user':
-        headers={'Authorization': 'Bearer ' + ctx.auth_token}
-    else:
-        headers={'Authorization': 'APIKey ' + ctx.client_id + ':' + ctx.client_token}
-
-    url = "%s%s" % (ctx.url, path)
+    url = "%s%s" % (job_server, path)
     print("Downloading script %s" % url)
 
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-    r = http.request("GET", url, headers=headers, preload_content=False)
+    r = http.request("GET", url, preload_content=False)
 
     if r.status > 299:
         print('Failed http %d url: %s' % (r.status, url))
-        print('Headers: ' + str(headers))
         print('--------------------------------------------------------------------------------')
         print()
         r.release_conn()
         return None
 
+    print("Downloaded script %s" % url)
+    
     m = re.search('filename=?([\w\.\-]*)',r.headers['Content-Disposition'])
     fileName = m.group(1)
     fullOutput = "%s/%s" % (output_dir, fileName)
+
+    print("Script file name %s" % fileName)
+    print("Full output for file %s" % fullOutput)
 
     os.makedirs(output_dir)
     with open(fullOutput, 'wb') as out:
@@ -261,6 +258,6 @@ def get_script_file(ctx, script_id, output_dir):
 
         raise Exception("Could not find script file that implements start_job")
     else:
-        script_file_name, file_extension = os.path.splitext(file)
+        script_file_name, file_extension = os.path.splitext(fileName)
         
         return script_file_name

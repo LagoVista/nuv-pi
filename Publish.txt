@@ -1,1 +1,6 @@
 https://packaging.python.org/tutorials/packaging-projects/
+
+- Work should be done in the nuvpy directory of ReportServer/ReportProcessor/reportsrv/nuvpy
+
+- Once we are happy with a release, bump the tag version in ./Publish.ps1 and run the powershell script this will publish the python package
+    
