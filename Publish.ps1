@@ -1,4 +1,4 @@
-$tag = "1.0.19"
+$tag = "1.2.2"
 
 $publishDir = "./dist"
 
@@ -19,5 +19,5 @@ git tag -a "v_$tag" -m "NuvPy Release %tag"
 git push origin --tags
 git tag -d "v_$tag"
 
-python3 -m build
-python3 -m twine upload --repository pypi "dist/*" -u $pypi_uid -p $pypi_pwd
+python -m build
+python -m twine upload --repository pypi "dist/*" -u $pypi_uid -p $pypi_pwd

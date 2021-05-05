@@ -6,7 +6,6 @@ import sys
 import certifi
 import urllib3.request
 import requests
-import nuvpy.nuviot_srvc as nuviot_srvc
 
 job_server = os.environ.get('JOB_SERVER_URL')
 if(job_server is None):
@@ -98,7 +97,7 @@ def add_job_error(job_type_id, job_id, error_message):
     if(r.status_code > 299):
        raise Exception("Error writing job error Http Error Code %d" % r.status_code)
     
-def complete_job(job_type_id, job_id, artifact):
+def complete_job(job_type_id, job_id, artifactType, artifactUrl, artifactId, executionTimeSeconds):
     """
     Called when a job has an error, will log that error on the server and notify the user
    
@@ -110,15 +109,27 @@ def complete_job(job_type_id, job_id, artifact):
     job_id: string
         The job_id to update the percentage completion for the job that is being executed.
    
-    error_message: string
-        Error message to be logged and reported to the user
+    artifactType: string
+        Type of artifact
+
+    artifactUrl: string
+        URL of the output artifactt
+
+    artifactId: string
+        id of the outtput artifact
+
+    executionTimeSeconds
+        Time taken to run the job
     """
 
     output = {
         "jobTypeId": job_type_id,
         "jobId": job_id,
         "success": True,
-        "artifact": artifact
+        "executionTimeSeconds": executionTimeSeconds,
+        "artifactType": artifactType,
+        "artifactUrl": artifactUrl,
+        "artifactId": artifactId
     }
 
     r = requests.post('%s/api/job/completed' % job_server, json=output)   
