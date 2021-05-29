@@ -92,9 +92,10 @@ def upload_report(report_id, generated_report_id, output_file):
     else:
         raise Exception(responseJSON["errors"][0]["message"])
 
-def add_page_header(pdf, report_title, device_name, logo_file, date):
-    report_date = None
-
+def add_page_header(pdf, report_title, device_name, logo_file = None, date = None):
+    if(date == None):
+        date = datetime.datetime.now()
+   
     if(isinstance(date, datetime.date) or isinstance(date, datetime.datetime)):
         report_date = date
     else:
@@ -107,10 +108,11 @@ def add_page_header(pdf, report_title, device_name, logo_file, date):
                 report_date = datetime.datetime.strptime(date, "%Y/%m/%d")
             
     if(report_date == None):
-        raise Exception("Invalid date format for report date.")
+        report_date = datetime.datetime.now()
 
-    pdf.set_xy(183.,6.0)
-    pdf.image(logo_file,  link='', type='', w=1586/80, h=1920/80)
+    if(logo_file != None):
+        pdf.set_xy(183.,6.0)
+        pdf.image(logo_file,  link='', type='', w=1586/80, h=1920/80)
     
     pdf.set_font('Arial', 'B', 24)
     pdf.set_text_color(50, 50, 50)
