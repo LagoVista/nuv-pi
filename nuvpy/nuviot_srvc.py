@@ -93,7 +93,7 @@ def post_json(ctx, path, json):
         print(responseJSON)
         print('--------------------------------------------------------------------------------')
         print()
-        raise Exception("Could not post JSON to %s" % path)
+        raise Exception("Could not post JSON to %s" % url)
 
     return responseJSON  
   

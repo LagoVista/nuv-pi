@@ -167,7 +167,7 @@ def get_job(job_type_id: str, job_id: str):
     return job, reportParameters
 
 
-def get_script_file(script_id, output_dir):
+def get_script_file(output_dir, script_id, revision_id):
     """
     Get a script file, or collection of files that make up the scripts necessry to execute
     a job or a report.  If the script is a collection of files it will be downloaded as a zip
@@ -180,11 +180,14 @@ def get_script_file(script_id, output_dir):
     Parameters
     ---------
 
+    output_dir:
+        Base directory of where the file(s) should be downloaded.
+
     script_id: string
         ID of the script that will be downloaded
 
-    output_dir:
-        Base directory of where the file(s) should be downloaded.
+    revision_id: string;
+        Revision of the report to be downloade
 
     Returns
     ---------
@@ -214,7 +217,7 @@ def get_script_file(script_id, output_dir):
 
     # If we made it here, that means the file doesn't exists locally so download it.
 
-    path = "/api/report/%s/runtime" % script_id
+    path = "/api/report/%s/runtime/%s" % (script_id, revision_id)
 
     url = "%s%s" % (job_server, path)
     print("Downloading script %s" % url)
@@ -254,6 +257,8 @@ def get_script_file(script_id, output_dir):
 
         os.remove(fullOutput)
         
+        # add the output directory so we can attempt to load all the files
+        # via __import__
         sys.path.append(output_dir)
 
         files = os.listdir(output_dir)
@@ -262,9 +267,12 @@ def get_script_file(script_id, output_dir):
             if(file_extension.lower() == ".py"):
                 module = __import__(script_file_name)
                 if(callable(getattr(module, "start_job", None))):
+                    # we found the file so now remove it the path, it will get added
+                    # back in later.
                     sys.path.remove(output_dir)
                     return script_file_name
 
+        
         sys.path.remove(output_dir)
 
         raise Exception("Could not find script file that implements start_job")

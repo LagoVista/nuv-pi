@@ -6,8 +6,9 @@ import urllib.parse
 import certifi
 import requests
 import nuvpy.nuviot_srvc as nuviot_srvc
+import re
 
-from datetime import datetime, timezone, timedelta
+import datetime
 import pandas as pd
 
 def init(output_dir):
@@ -50,7 +51,7 @@ def add_generated_report_header(report_history):
         print(responseJSON)
         print('--------------------------------------------------------------------------------')
         print()
-        raise Exception("Could not post JSON to %s" % url)
+        raise Exception("Could not upload report header to %s" % url)
 
     if(responseJSON["successful"]):
         return responseJSON["result"]
@@ -91,10 +92,23 @@ def upload_report(report_id, generated_report_id, output_file):
     else:
         raise Exception(responseJSON["errors"][0]["message"])
 
-
 def add_page_header(pdf, report_title, device_name, logo_file, date):
-    report_date = datetime.strptime(date, "%m/%d/%Y %H:%M")
-        
+    report_date = None
+
+    if(isinstance(date, datetime.date) or isinstance(date, datetime.datetime)):
+        report_date = date
+    else:
+        p = re.compile('[0-1]?\d\/[0-3]?\d\/\d{4} \d{1,2}:\d{2}')
+        if(p.match(date) != None):
+            report_date = datetime.datetime.strptime(date, "%m/%d/%Y %H:%M")
+        else:
+            p = re.compile('^\d{4}\/[0-1]?\d\/[0-3]?\d$')
+            if(p.match(date) != None):
+                report_date = datetime.datetime.strptime(date, "%Y/%m/%d")
+            
+    if(report_date == None):
+        raise Exception("Invalid date format for report date.")
+
     pdf.set_xy(183.,6.0)
     pdf.image(logo_file,  link='', type='', w=1586/80, h=1920/80)
     
