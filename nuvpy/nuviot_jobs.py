@@ -270,7 +270,12 @@ def get_script_file(output_dir, script_id, revision_id):
                     # we found the file so now remove it the path, it will get added
                     # back in later.
                     sys.path.remove(output_dir)
-                    return script_file_name
+                    fullScriptFileName = "%s/%s" % (output_dir, file)
+                    revisionFileName = "%s/%s.py" % (output_dir, revision_id)
+
+                    os.rename(fullScriptFileName, revisionFileName)
+                    
+                    return revision_id
 
         
         sys.path.remove(output_dir)
@@ -278,5 +283,9 @@ def get_script_file(output_dir, script_id, revision_id):
         raise Exception("Could not find script file that implements start_job")
     else:
         script_file_name, file_extension = os.path.splitext(fileName)
-        
-        return script_file_name
+        fullScriptFileName = "%s/%s" % (output_dir, fileName)
+        revisionFileName = "%s/%s.py" % (output_dir, revision_id)
+
+        os.rename(fullScriptFileName, revisionFileName)
+              
+        return revision_id
