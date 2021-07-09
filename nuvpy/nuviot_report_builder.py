@@ -12,20 +12,61 @@ import datetime
 import pandas as pd
 
 def init(output_dir):
+    """
+    Initialize the report builder by passing in the directory where the output files 
+    will be saved.
+
+    Parameters
+    ----------
+
+    output_dir:
+        directory where output files will be saved 
+
+    """
     try:
         os.makedirs(output_dir)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
 
-def add_generated_report_header(report_history):
+def add_generated_report_header(report_header):
+    """
+    Upload report history and return the id of the header that was generated
+    on the server.
+
+    Parameters
+    ----------
+    
+    report_header:
+        Required Parmeters:
+        A dictionary of parameters that will be used to describe the report that consist of:
+        - report: Name of the report
+        - executionTimeMS: The number of milliseconds it took to generate the report
+        - scheduled: True if the report was scheduled, false if it was not
+        - note: Any notes to be added to the report
+        - user: An Entity Header (dictionary of id and text) of the user (which could be a system user) that requested the report.
+        - contentType: Mime type of the report, generally this is application/pdf
+        - fileName: name of the file (not including the path) of the report
+        - reportTitle: tile of the report as it was generated
+        Optional Parameters
+        - reportSummary: report summary as returned from the generatred report
+        - reportDate: date of for the report
+        - device: An Entity Header (dictionary of id and text) of the device that this report is for, if this is provided reports for specific devices will be available in the dashboard
+    
+    Returns
+    -------
+    
+    out: string
+        Returns the id of the generated report that can be used to upload a report.
+    
+    """
     job_server = os.environ.get('JOB_SERVER_URL')
     if(job_server is None):
         raise Exception("Missing environment variable [JOB_SERVER_URL]")
 
     headers={'Content-Type':'application/json'}
     
-    generated_report_json = json.dumps(report_history)
+    generated_report_json = json.dumps(report_header)
     url = "%s/api/generatedreport/header" % (job_server)
     
     encoded_data = generated_report_json.encode('utf-8')
@@ -59,6 +100,26 @@ def add_generated_report_header(report_history):
         raise Exception(responseJSON["errors"][0]["message"])
 
 def upload_report(report_id, generated_report_id, output_file):
+    """
+    upload a report file to the server
+
+    Parameters
+    ----------
+    report_id
+        The id of the report definition that was originally created for this report.
+
+    generated_report_id
+        Id returned from adding the report_header to the server
+
+    output_file
+        Full path and file of the report that was generated
+
+    Returns
+    --------
+    out: string
+        Returns the full URL that can be used to access this report, note that access to this PDF will be secured by authentication.
+
+    """
     job_server = os.environ.get('JOB_SERVER_URL')
     if(job_server is None):
         raise Exception("Missing environment variable [JOB_SERVER_URL]")
@@ -93,6 +154,26 @@ def upload_report(report_id, generated_report_id, output_file):
         raise Exception(responseJSON["errors"][0]["message"])
 
 def add_page_header(pdf, report_title, device_name, logo_file = None, date = None):
+    """
+    Add a report header to a PDF
+
+    Parameters
+    ----------
+    pdf
+        Instance of the the PDF document that is being built.
+    
+    report_title
+        Title to be placed at the top of the report
+
+    device_name
+        Name of the device that will be added to the report header
+
+    logo_file
+        Logo file to be added to the top of the report (optional)
+
+    date
+        Date to be added to the top of the report (optional)
+    """
     if(date == None):
         date = datetime.datetime.now()
    
@@ -119,6 +200,7 @@ def add_page_header(pdf, report_title, device_name, logo_file = None, date = Non
     pdf.set_xy(0,2.0)
     pdf.cell(w=210.0, h=40.0, align='C', txt=report_title, border=0)
     pdf.set_font('Arial', 'B', 18)
+
     
     pdf.set_xy(10,12.0)
     pdf.cell(w=210.0, h=40.0, align='L', txt=device_name, border=0)
@@ -128,6 +210,23 @@ def add_page_header(pdf, report_title, device_name, logo_file = None, date = Non
     pdf.cell(w=210.0, h=40.0, align='L', txt=report_date.strftime("%b %d, %Y"), border=0)
 
 def add_table(pdf, title, y, cols, df):
+    """
+    Add a table to PDF
+
+    Parameters
+    ----------
+    pdf
+        Instance of the PDF document that is being built.
+
+    title
+        Title to be placed at the top of the table.
+
+    y 
+        Y position to add the table to the report
+
+    cols
+        Definition of the table to include name of the data column, width and alignment 
+    """
     x = 20
    
     pdf.set_font('Arial', 'B', 14)

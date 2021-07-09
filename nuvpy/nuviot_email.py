@@ -19,7 +19,7 @@ job_server = os.environ.get('JOB_SERVER_URL')
 
 def send_report_to_distribution(distribution_list_id, file_with_path, file_name, msg_subject, msg_content):
     """
-    Sends a report/file to a distribution list as identifed within NuvIot.
+    Sends a report/file to a distribution list as identified within NuvIot.
 
     Parameters
     ----------
@@ -32,7 +32,7 @@ def send_report_to_distribution(distribution_list_id, file_with_path, file_name,
     file_name : string
         name of the file, used to name the file as it is attached to the email
 
-    msg_subect : string
+    msg_subject : string
         subject fo the message to be sent
 
     msg_content : string
@@ -66,7 +66,7 @@ def send_report(to_email_address, file_with_path, file_name, msg_subject, msg_co
     file_name : string
         name of the file, used to name the file as it is attached to the email
 
-    msg_subect : string
+    msg_subject : string
         subject fo the message to be sent
 
     msg_content : string

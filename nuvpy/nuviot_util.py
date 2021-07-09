@@ -6,7 +6,7 @@ class NuvIoTItem:
         self.name = name
         return
 
-def to_item_array(json, name_field = "name"):
+def to_item_array(json, name_field = "name"):    
     if json == None:
         return None
     

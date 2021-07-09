@@ -16,23 +16,88 @@ from sendgrid.helpers.mail.file_name import FileName
 from sendgrid.helpers.mail.disposition import Disposition
        
 class NuvIoTResponse:
+    """
+    The NuvIoTResponse class contains fields that were returned from
+    a call to a NuvIoT service that returns a list of data.  This class
+    returns the following fields.  Depending on the underlying data source
+    it may return a row key, partition key or both.  It is advisable to return
+    both in the requests for additional data.
+
+    The following are the parameters returned by a list data request, not all are present
+    with every request
+    ------------
+    * rows - array of rows of data
+    * nextPartitionKey - partition key to be returned to the server to receive the next page of data.
+    * nextRowKey - row key to be returned to the server to receive the next page of data.
+    * pageSize - total number of records per page.
+    * pageIndex - for data sources that can return a page index, the page index of the data requested.
+    * pageCount - for data source that can return a total page count, the total number of pages that could be returned.
+    * hasMoreRecords - true if there are more records and false if not.
+ 
+    """
     def __init__(self, result):
         self.rows = result['model']
-        self.nextParititonKey = result['nextPartitionKey']
+        self.nextPartitionKey = result['nextPartitionKey']
         self.nextRowKey = result['nextRowKey']
         self.pageSize = result['pageSize']
+        self.pageIndex = result['pageIndex']
+        self.pageCount = result['pageCount']
         self.hasMoreRecords = result['hasMoreRecords']
 
 class NuvIoTRequest:
     def __init__(self, path):
+        """
+        The NuvIoT request class can be used to make request to different data sources within NuvIoT.  These 
+        are generally data streams but may also be used to return other types of data.
+
+        The following are the parameters returned by a list data request, not all are present
+        with every request
+        ------------
+
+        * path - Path to the end point that will return data, this may include parameters as specified by the REST request specification for the data source.
+        * pageSize - number of records per page to be returned most data sources support page size.
+        * pageIndex - some data sources expect the page index to perform paging.  If a page index was returned from the list request it should be passed in as a parameter.
+        * nextRowKey - some data source expect the a row key to be used to perform paging.  If a row key was returned from the list request it should be passed in as a parameter.
+        * nextPartitionKey - some data source expect the a partition key to be used to perform paging.  If a partition key was returned from the list request it should be passed in as a parameter.
+        * startDate - for queries that support filtering by date, an optional start date can be provided in the standard JSON format.
+        * endDate - for queries that support filtering by date, an optional end date can be provided in the standard JSON format.
+        * groupBy - for queries that allow grouping by a field, the name of the field to group the data.
+        * groupBySize - for queries that allow grouping of data, the number of records to group data together.
+    
+        Parameters
+        ----------
+        path:
+            Path used to query data.
+
+        """
         self.path = path
         self.pageSize = 50
+        self.pageIndex = 0
         self.nextRowKey = None
         self.nextPartitionKey = None
         self.startDate = None
         self.endDate = None
+        self.groupBy = None
+        self.groupBySize = None
                                       
 def get(ctx, path, content_type = "", pageSize=50):
+    """
+    Make a GET request to a NuvIoT data source will return a string that includes JSON for the response.
+
+    Parameters
+    ----------
+    ctx:
+        Context Object that defines how this method should call the server to include authentication.
+
+    path:
+        Path used to make the request, the auth and server information will be used from the ctx object.
+
+    contentType: 
+        Optional content type parameter used set the Accept HTTP header, defaults to empty.
+
+    pageSize:
+        Optional page size parameter used to make list requests, defaults to 50
+    """
     if ctx.auth_type == 'user':
         headers={'Authorization': 'Bearer ' + ctx.auth_token, 'x-pagesize' : str(pageSize)}
     else:
@@ -64,6 +129,24 @@ def get(ctx, path, content_type = "", pageSize=50):
     return responseJSON
 
 def post_json(ctx, path, json):
+    """
+    Make a POST request with a JSON payload to be sent to a NuvIoT endpoint.
+    
+    Parameters
+    ----------
+    ctx:
+        Context Object that defines how this method should call the server to include authentication.
+
+    path:
+        Path used to make the request, the auth and server information will be used from the ctx object.
+
+    json:
+        JSON object to be posted
+
+    Returns
+    -------
+        Will return any JSON returned from the server, if the response code is not a success code an exception will be raised.
+    """
     if ctx.auth_type == 'user':
         headers={'Authorization': 'Bearer ' + ctx.auth_token, 'Content-Type':'application/json'}
     else:
@@ -98,6 +181,23 @@ def post_json(ctx, path, json):
     return responseJSON  
   
 def post_file(ctx, path, file_name):
+    """
+    Post a file to a NuvIoT end point.
+
+    If the method does not raise an exception the file will be uploaded. 
+    
+    Parameters
+    ----------
+    ctx:
+        Context Object that defines how this method should call the server to include authentication.
+
+    path:
+        Path used to make the request, the auth and server information will be used from the ctx object.
+
+    file:
+        full path to the file including the file name and extension to be uploaded.
+
+    """
     if ctx.auth_type == 'user':
         headers={'Authorization': 'Bearer ' + ctx.auth_token}
     else:
@@ -122,6 +222,24 @@ def post_file(ctx, path, file_name):
 
 
 def download_file(ctx, path, dest, accept = ""):
+    """
+    Download a file to a NuvIoT
+    
+    Parameters
+    ----------
+    ctx:
+        Context Object that defines how this method should call the server to include authentication.
+
+    path:
+        Path used to make the request, the auth and server information will be used from the ctx object.
+
+    dest:
+        The full path including the file name and extension of where the downloaded file should be saved.
+
+    Returns
+    -------
+        Will return True if the file is download and saved locally, other wise it will return False.
+    """
     if ctx.auth_type == 'user':
         headers={'Authorization': 'Bearer ' + ctx.auth_token}
     else:
@@ -158,9 +276,25 @@ def download_file(ctx, path, dest, accept = ""):
             out.write(data)
     r.release_conn()
     return True
- 
-   
+  
 def get_paged(ctx, rqst):
+    """
+    Make a GET request to a NuvIoT paged data source will return a string that includes JSON for the response.
+
+    Parameters
+    ----------
+    ctx:
+        Context Object that defines how this method should call the server to include authentication.
+
+    path:
+        Path used to make the request, the auth and server information will be used from the ctx object.
+
+    contentType: 
+        Optional content type parameter used set the Accept HTTP header, defaults to empty.
+
+    pageSize:
+        Optional page size parameter used to make list requests, defaults to 50
+    """    
     if ctx.auth_type == 'user':
         headers={'Authorization': 'Bearer ' + ctx.auth_token, 'x-pagesize' : rqst.pageSize}
     else:
