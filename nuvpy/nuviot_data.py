@@ -67,3 +67,38 @@ def get_stream(ctx, stream_id, device_id, page_size=1500):
     rj = json.loads(responseJSON)
     response = NuvIoTResponse(rj)
     return response.rows
+
+def get_paged_stream(ctx, stream_id, device_id, page_size, next_row_key = None):
+    """
+    Get a JSON array containing the data in a data stream for a particular device id. 
+
+    Parameters
+    ----------
+    ctx:
+        Context Object that defines how this method should call the server to include authentication.
+
+    stream_id:
+        Identifier of the data stream where data should be pulled.
+
+    device_id:
+        Device Id to pull data for.
+    
+    page_size:
+        Number of record to return.
+
+    next_row_key
+        filter to pull next set of data.
+
+    """
+    rqst = NuvIoTRequest('/clientapi/datastream/' + stream_id + '/data/' + device_id)
+    rqst.pageSize = page_size
+    if next_row_key != None:
+        rqst.nextRowKey = next_row_key
+    
+    responseJSON = nuviot_srvc.get_paged(ctx, rqst)
+    if responseJSON == None:
+        return
+    
+    rj = json.loads(responseJSON)
+    response = NuvIoTResponse(rj)
+    return response

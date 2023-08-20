@@ -8,8 +8,6 @@ import urllib3.request
 import requests
 
 job_server = os.environ.get('JOB_SERVER_URL')
-if(job_server is None):
-    raise Exception("Missing environment variable [JOB_SERVER_URL]")
 
 def get_launch_args():
     """
@@ -47,6 +45,9 @@ def set_job_status(job_type_id: str, job_id: str, status: str):
     
     """
 
+    if(job_server is None):
+        raise Exception("Missing environment variable [JOB_SERVER_URL]")
+    
     status_url = '%s/api/job/%s/%s/%s' % (job_server, job_type_id, job_id, status)
     print(status_url)
     r = requests.get(status_url)
@@ -66,6 +67,10 @@ def set_job_progress(job_type_id, job_id, percent_complete):
     job_id: string
         The job_id to update the percentage completion for the job that is being executed.
     """
+
+    if(job_server is None):
+        raise Exception("Missing environment variable [JOB_SERVER_URL]")
+
     r = requests.get('%s/api/job/%s/%s/progress/%d' % (job_server, job_type_id, job_id, percent_complete))
     if(r.status_code > 299):
        raise Exception("Error setting job error message: Http Response Code: %d" % r.status_code)
@@ -92,6 +97,9 @@ def add_job_error(job_type_id, job_id, error_message):
         "success": False,
         "error": error_message
     }
+
+    if(job_server is None):
+        raise Exception("Missing environment variable [JOB_SERVER_URL]")
 
     r = requests.post('%s/api/job/failed' % job_server, json=output)   
     if(r.status_code > 299):
@@ -132,6 +140,9 @@ def complete_job(job_type_id, job_id, artifactType, artifactUrl, artifactId, exe
         "artifactId": artifactId
     }
 
+    if(job_server is None):
+        raise Exception("Missing environment variable [JOB_SERVER_URL]")
+
     r = requests.post('%s/api/job/completed' % job_server, json=output)   
     if(r.status_code > 299):
        raise Exception("Error writing job error Http Error Code %d" % r.status_code)
@@ -155,6 +166,9 @@ def get_job(job_type_id: str, job_id: str):
     """
 
     set_job_status(job_type_id, job_id, "Running")
+
+    if(job_server is None):
+        raise Exception("Missing environment variable [JOB_SERVER_URL]")
 
     getJobUri = job_server + '/api/job/' + job_type_id + '/' + job_id
    
@@ -218,6 +232,9 @@ def get_script_file(output_dir, script_id, revision_id):
     # If we made it here, that means the file doesn't exists locally so download it.
 
     path = "/api/report/%s/runtime/%s" % (script_id, revision_id)
+
+    if(job_server is None):
+        raise Exception("Missing environment variable [JOB_SERVER_URL]")
 
     url = "%s%s" % (job_server, path)
     print("Downloading script %s" % url)

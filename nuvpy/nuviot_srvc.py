@@ -300,6 +300,27 @@ def get_paged(ctx, rqst):
     else:
         headers={'Authorization': 'APIKey ' + ctx.client_id + ':' + ctx.client_token, 'x-pagesize' : rqst.pageSize}    
 
+    if(rqst.nextRowKey):
+        headers['x-nextrowkey'] = rqst.nextRowKey
+
+    if(rqst.nextPartitionKey):
+        headers['x-nextpartitionkey'] = rqst.nextPartitionKey
+
+    if(rqst.pageIndex):
+        headers['x-pageindex'] = rqst.pageIndex
+
+    if(rqst.startDate):
+        headers['x-filter-startdate'] = rqst.startDate
+
+    if(rqst.endDate):
+        headers['x-filter-enddatex'] = rqst.endDate
+
+    if(rqst.groupBy):
+        headers['x-group-by'] = rqst.groupBy        
+
+    if(rqst.groupBySize):
+        headers['x-group-by-size'] = rqst.groupBySize
+
     http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
     url = ctx.url + rqst.path
     r = http.request("GET", url, headers=headers, preload_content=False)
@@ -318,5 +339,4 @@ def get_paged(ctx, rqst):
         print()
         return None
       
-
     return responseJSON
