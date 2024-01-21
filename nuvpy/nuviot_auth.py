@@ -77,6 +77,32 @@ class AuthContext:
         cls.url = url
         cls.client_token = client_token
         return cls()
+    
+    @classmethod
+    def for_report(cls, clientid, client_token, url="http://api-host-services:5001"):
+        """
+        Creates an authorization context for client id and client token as registered on NuvIoT
+
+        Parameters
+        ----------
+        appid:
+            Unique application id that will be sent along with the user login
+
+        uid: 
+            User Id, which is usually the email address for the user
+
+        pwd:
+            Password for the user
+
+        url:
+            Optional, url to login the account, unless this is a custom installation, the default will be http://api-host-services:5001
+        """
+
+        cls.auth_type = 'clientapp'
+        cls.client_id = clientid
+        cls.url = url
+        cls.client_token = client_token
+        return cls()    
         
     def get_token(self):
         """

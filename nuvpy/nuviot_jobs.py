@@ -233,9 +233,6 @@ def get_script_file(output_dir, script_id, revision_id):
 
     path = "/api/report/%s/runtime/%s" % (script_id, revision_id)
 
-    if(job_server is None):
-        raise Exception("Missing environment variable [JOB_SERVER_URL]")
-
     url = "%s%s" % (job_server, path)
     print("Downloading script %s" % url)
 

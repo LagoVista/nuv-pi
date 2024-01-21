@@ -1,4 +1,4 @@
-$tag = "1.4.8"
+$tag = "1.4.12"
 
 $publishDir = "./dist"
 
@@ -18,6 +18,10 @@ if(Test-Path $publishDir){
 git tag -a "v_$tag" -m "NuvPy Release %tag"
 git push origin --tags
 git tag -d "v_$tag"
+
+
+$pypi_uid
+$pypi_pwd
 
 python -m build
 python -m twine upload --repository pypi "dist/*" -u $pypi_uid -p $pypi_pwd
